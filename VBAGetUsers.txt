@@ -1,0 +1,45 @@
+Option Explicit
+Sub ListGroups()
+Dim Start As Integer
+Dim UsersEnd As Long
+Dim GroupsEnd As Long
+Dim UserTable As Range
+Dim GroupTable As Range
+Dim UsersAndGroups As Object
+Dim GroupsArray As Variant
+Dim FindResult As Object
+Dim UserName As Variant
+Dim UsersGroups() As String
+Dim I As Long
+Dim Row As Range
+Dim Column As Range
+
+'Get table sizes
+Start = 1
+UsersEnd = Sheets(1).Range("A" & Sheets(1).Rows.Count).End(xlUp).Row
+Set UserTable = Sheets(1).Range("A" & (Start + 1), "C" & UsersEnd)
+GroupsEnd = Sheets(2).Cells(1, Sheets(2).Columns.Count).End(xlToLeft).Column
+Set GroupTable = Sheets(2).Range("A" & Start, Sheets(2).Cells(Sheets(2).Rows.Count, GroupsEnd))
+Set UsersAndGroups = CreateObject("Scripting.Dictionary")
+
+'Identify the groups associated with each user
+For Each Row In UserTable.Rows
+    UserName = Sheets(1).Cells(Row.Row, 1).Value
+    For Each Column In GroupTable.Columns
+        Set FindResult = Sheets(2).Columns(Column.Column).Find(What:=UserName, LookAt:=xlWhole)
+        If Not FindResult Is Nothing Then
+            If UsersAndGroups.Exists(UserName) Then
+                UsersAndGroups(UserName) = UsersAndGroups(UserName) & "|" & Sheets(2).Cells(1, Column.Column).Value
+            Else
+                UsersAndGroups(UserName) = Sheets(2).Cells(1, Column.Column).Value
+            End If
+        End If
+    Next Column
+    UsersGroups = Split(UsersAndGroups(UserName), "|")
+    'Lists users
+    For I = LBound(UsersGroups) To UBound(UsersGroups)
+        Sheets(1).Cells(Row.Row, 4 + I).Value = Trim(UsersGroups(I))
+    Next I
+Next Row
+MsgBox ("All groups listed.")
+End Sub
