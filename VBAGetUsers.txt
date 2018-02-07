@@ -11,20 +11,28 @@ Dim FindResult As Object
 Dim UserName As Variant
 Dim UsersGroups() As String
 Dim I As Long
+Dim Cell as Long
 Dim Row As Range
 Dim Column As Range
+Dim StartTime as Double
+Dim SecondsElapsed As Double
 
+StartTime = Timer
 'Get table sizes
 Start = 1
-UsersEnd = Sheets(1).Range("A" & Sheets(1).Rows.Count).End(xlUp).Row
-Set UserTable = Sheets(1).Range("A" & (Start + 1), "C" & UsersEnd)
-GroupsEnd = Sheets(2).Cells(1, Sheets(2).Columns.Count).End(xlToLeft).Column
-Set GroupTable = Sheets(2).Range("A" & Start, Sheets(2).Cells(Sheets(2).Rows.Count, GroupsEnd))
+With Sheets(1)
+  UsersEnd = .Range("A" & .Rows.Count).End(xlUp).Row
+  Set UserTable = .Range(.Cells(2, 1), .Cells(UsersEnd, 1))
+End With
+With Sheets(2)
+  GroupsEnd = .Cells(1, .Columns.Count).End(xlToLeft).Column
+  Set GroupTable = .Range("A" & Start, .Cells(.Rows.Count, GroupsEnd))
+End With
 Set UsersAndGroups = CreateObject("Scripting.Dictionary")
 
 'Identify the groups associated with each user
-For Each Row In UserTable.Rows
-    UserName = Sheets(1).Cells(Row.Row, 1).Value
+For Cell = 2 to UsersEnd
+    UserName = Sheets(1).Cells(Cell, 1).Value
     For Each Column In GroupTable.Columns
         Set FindResult = Sheets(2).Columns(Column.Column).Find(What:=UserName, LookAt:=xlWhole)
         If Not FindResult Is Nothing Then
@@ -38,8 +46,9 @@ For Each Row In UserTable.Rows
     UsersGroups = Split(UsersAndGroups(UserName), "|")
     'Lists users
     For I = LBound(UsersGroups) To UBound(UsersGroups)
-        Sheets(1).Cells(Row.Row, 4 + I).Value = Trim(UsersGroups(I))
+        Sheets(1).Cells(Cell, 4 + I).Value = Trim(UsersGroups(I))
     Next I
-Next Row
-MsgBox ("All groups listed.")
+Next Cell
+SecondsElapsed = Round(Timer - StartTime, 2)
+MsgBox ("All groups listed in " & SecondsElapsed & " seconds.")
 End Sub
